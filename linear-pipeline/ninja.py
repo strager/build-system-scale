@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 
 from linearpipeline import LinearPipelineTest
+import bsstest
 import os
 import subprocess
 import sys
@@ -31,6 +32,9 @@ class NinjaTest(LinearPipelineTest):
         ], cwd=temp_dir)
 
 test_classes = [NinjaTest]
+
+def main():
+    bsstest.test_and_plot(test_classes)
 
 if __name__ == '__main__':
     main()

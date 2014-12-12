@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 
 from linearpipeline import LinearPipelineTest
+import bsstest
 import os
 import subprocess
 import sys
@@ -34,11 +35,7 @@ class GNUMakeTest(LinearPipelineTest):
 test_classes = [GNUMakeTest]
 
 def main():
-    LinearPipelineTest.write_report_header(sys.stdout)
-    for test_class in test_classes:
-        test_class.create_test_and_report(
-            data_file=sys.stdout,
-        )
+    bsstest.test_and_plot(test_classes)
 
 if __name__ == '__main__':
     main()
