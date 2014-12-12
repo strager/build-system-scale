@@ -6,10 +6,15 @@ sys.path.append(
     os.path.join( os.path.dirname(__file__), '..', '..'),
 )
 
+from linear.emptyincremental.emptyincrementalbase \
+    import EmptyIncrementalTestBase
 from linear.ninjabase import NinjaLinearTestBase
 import lib.bsstest
 
-class Test(NinjaLinearTestBase):
+class Test(
+    NinjaLinearTestBase,
+    EmptyIncrementalTestBase,
+):
     pass
 
 test_classes = [Test]

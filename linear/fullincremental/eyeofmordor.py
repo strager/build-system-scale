@@ -7,11 +7,16 @@ sys.path.append(
 )
 
 from linear.eyeofmordorbase import EyeOfMordorLinearTestBase
+from linear.fullincremental.fullincrementalbase \
+    import FullIncrementalTestBase
 import lib.bsstest
 
-class Test(EyeOfMordorLinearTestBase):
+class Test(
+    EyeOfMordorLinearTestBase,
+    FullIncrementalTestBase,
+):
     def _run(self, temp_dir):
-        self._build(temp_dir)
+        self._build(temp_dir, start=1)
 
 test_classes = [Test]
 

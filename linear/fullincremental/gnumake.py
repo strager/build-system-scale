@@ -6,10 +6,15 @@ sys.path.append(
     os.path.join(os.path.dirname(__file__), '..', '..'),
 )
 
+from linear.fullincremental.fullincrementalbase \
+    import FullIncrementalTestBase
 from linear.gnumakebase import GNUMakeLinearTestBase
 import lib.bsstest
 
-class Test(GNUMakeLinearTestBase):
+class Test(
+    GNUMakeLinearTestBase,
+    FullIncrementalTestBase,
+):
     pass
 
 test_classes = [Test]
