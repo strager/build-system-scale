@@ -28,6 +28,9 @@ class BSSTest(object):
             end = get_time()
             return end - start
 
+    def _set_up(self, temp_dir):
+        pass
+
 def _sanitize_gnuplot_string(string):
     return string  # TODO(strager)
 
