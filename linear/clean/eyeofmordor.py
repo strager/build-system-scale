@@ -3,16 +3,16 @@
 import os
 import sys
 sys.path.append(
-    os.path.join( os.path.dirname(__file__), '..', 'lib'),
+    os.path.join(os.path.dirname(__file__), '..', '..'),
 )
 
-from eyeofmordorbase import EyeOfMordorTestBase
-from linearpipelinebase import LinearPipelineTestBase
-import bsstest
+from lib.eyeofmordorbase import EyeOfMordorTestBase
+from linear.linearbase import LinearTestBase
+import lib.bsstest
 import shutil
 
-class EyeOfMordorLinearPipelineTest(
-    LinearPipelineTestBase,
+class EyeOfMordorLinearTest(
+    LinearTestBase,
     EyeOfMordorTestBase,
 ):
     def _run(self, temp_dir):
@@ -23,10 +23,10 @@ class EyeOfMordorLinearPipelineTest(
                 prefix + str(i + 1),
             )
 
-test_classes = [EyeOfMordorLinearPipelineTest]
+test_classes = [EyeOfMordorLinearTest]
 
 def main():
-    bsstest.test_and_plot(test_classes)
+    lib.bsstest.test_and_plot(test_classes)
 
 if __name__ == '__main__':
     main()

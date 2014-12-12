@@ -3,19 +3,16 @@
 import os
 import sys
 sys.path.append(
-    os.path.join( os.path.dirname(__file__), '..', 'lib'),
+    os.path.join( os.path.dirname(__file__), '..', '..'),
 )
 
-from ninjabase import NinjaTestBase
-from linearpipelinebase import LinearPipelineTestBase
-import bsstest
+from lib.ninjabase import NinjaTestBase
+from linear.linearbase import LinearTestBase
+import lib.bsstest
 
-class NinjaLinearPipelineTest(
-    LinearPipelineTestBase,
-    NinjaTestBase,
-):
+class NinjaLinearTest(LinearTestBase, NinjaTestBase):
     def _set_up(self, temp_dir):
-        super(NinjaLinearPipelineTest, self) \
+        super(NinjaLinearTest, self) \
             ._set_up(temp_dir)
         build_ninja_path = self._build_ninja_path(temp_dir)
         with open(build_ninja_path, 'w') as ninja:
@@ -32,10 +29,10 @@ class NinjaLinearPipelineTest(
                 self._depth,
             ))
 
-test_classes = [NinjaLinearPipelineTest]
+test_classes = [NinjaLinearTest]
 
 def main():
-    bsstest.test_and_plot(test_classes)
+    lib.bsstest.test_and_plot(test_classes)
 
 if __name__ == '__main__':
     main()

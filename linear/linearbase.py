@@ -1,8 +1,8 @@
-from bsstest import BSSTest
+from lib.bsstest import BSSTest
 import os
 import sys
 
-class LinearPipelineTestBase(BSSTest):
+class LinearTestBase(BSSTest):
     def __init__(self, depth):
         self._depth = depth
 

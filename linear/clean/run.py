@@ -3,11 +3,11 @@
 import os
 import sys
 sys.path.append(
-    os.path.join( os.path.dirname(__file__), '..', 'lib'),
+    os.path.join( os.path.dirname(__file__), '..', '..'),
 )
 
-import bsstest
 import importlib
+import lib.bsstest
 
 tests = [
     'eyeofmordor',
@@ -20,7 +20,7 @@ def main():
     for test in tests:
         module = importlib.import_module(test)
         test_classes += module.test_classes
-    bsstest.test_and_plot(test_classes)
+    lib.bsstest.test_and_plot(test_classes)
 
 if __name__ == '__main__':
     main()

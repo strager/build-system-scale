@@ -3,19 +3,16 @@
 import os
 import sys
 sys.path.append(
-    os.path.join( os.path.dirname(__file__), '..', 'lib'),
+    os.path.join(os.path.dirname(__file__), '..', '..'),
 )
 
-from gnumakebase import GNUMakeTestBase
-from linearpipelinebase import LinearPipelineTestBase
-import bsstest
+from lib.gnumakebase import GNUMakeTestBase
+from linear.linearbase import LinearTestBase
+import lib.bsstest
 
-class GNUMakeLinearPipelineTest(
-    LinearPipelineTestBase,
-    GNUMakeTestBase,
-):
+class GNUMakeLinearTest(LinearTestBase, GNUMakeTestBase):
     def _set_up(self, temp_dir):
-        super(GNUMakeLinearPipelineTest, self) \
+        super(GNUMakeLinearTest, self) \
             ._set_up(temp_dir)
         makefile_path = self._makefile_path(temp_dir)
         with open(makefile_path, 'w') as makefile:
@@ -27,10 +24,10 @@ class GNUMakeLinearPipelineTest(
                     ),
                 )
 
-test_classes = [GNUMakeLinearPipelineTest]
+test_classes = [GNUMakeLinearTest]
 
 def main():
-    bsstest.test_and_plot(test_classes)
+    lib.bsstest.test_and_plot(test_classes)
 
 if __name__ == '__main__':
     main()
