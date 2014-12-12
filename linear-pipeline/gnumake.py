@@ -1,48 +1,44 @@
 #!/usr/bin/env python2.7
 
-from bsstest import BSSTest
+from linearpipeline import LinearPipelineTest
 import os
 import subprocess
 import sys
 
-class GNUMakeTest(BSSTest):
-    def __init__(self, depth):
-        self.__depth = depth
-
-    @property
-    def _name(self):
-        return 'gnumake'
-
-    @property
-    def _inputs(self):
-        return (self.__depth,)
+class GNUMakeTest(LinearPipelineTest):
+    name = 'gnumake'
 
     def _set_up(self, temp_dir):
+        super(GNUMakeTest, self)._set_up(temp_dir)
         makefile_path = os.path.join(
-            temp_dir, 'GNUMakefile')
+            temp_dir,
+            'GNUMakefile',
+        )
         with open(makefile_path, 'w') as makefile:
-            for i in xrange(1, self.__depth):
+            for i in xrange(1, self._depth):
                 makefile.write(
                    'file_{}: file_{}\n\t@cp $< $@\n'.format(
                         i + 1,
-                    i,
+                        i,
                     ),
                 )
-        f_path = os.path.join( temp_dir, 'file_1')
-        with open(f_path, 'wb') as f:
-            f.write('hello world')
 
     def _run(self, temp_dir):
         subprocess.check_call([
             'make',
             '-f',
             'GNUMakefile',
-            'file_{}'.format(self.__depth),
+            'file_{}'.format(self._depth),
         ], cwd=temp_dir)
 
+test_classes = [GNUMakeTest]
+
 def main():
-    for depth in map(int, sys.argv[1:]):
-        GNUMakeTest(depth=depth).test_and_report()
+    LinearPipelineTest.write_report_header(sys.stdout)
+    for test_class in test_classes:
+        test_class.create_test_and_report(
+            data_file=sys.stdout,
+        )
 
 if __name__ == '__main__':
     main()
