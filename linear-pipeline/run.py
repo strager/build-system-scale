@@ -10,6 +10,7 @@ import bsstest
 import importlib
 
 tests = [
+    'eyeofmordor',
     'gnumake',
     'ninja',
 ]
