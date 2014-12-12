@@ -72,3 +72,12 @@ def create_plot(data, file_name):
 
         plot_file.flush()
         subprocess.check_call(['gnuplot', plot_file.name])
+
+def test_and_plot(classes, plot_file_name='plot.gif'):
+    test_data = []
+    for cls in classes:
+        for input in cls.default_inputs():
+            instance = cls(*input)
+            time = instance.test()
+            test_data.append((instance, time))
+    create_plot(test_data, file_name=plot_file_name)
