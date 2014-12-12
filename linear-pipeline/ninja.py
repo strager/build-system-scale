@@ -7,11 +7,11 @@ sys.path.append(
 )
 
 from ninjabase import NinjaTestBase
-from linearpipeline import LinearPipelineTest
+from linearpipelinebase import LinearPipelineTestBase
 import bsstest
 
 class NinjaLinearPipelineTest(
-    LinearPipelineTest,
+    LinearPipelineTestBase,
     NinjaTestBase,
 ):
     def _set_up(self, temp_dir):

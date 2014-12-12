@@ -7,11 +7,11 @@ sys.path.append(
 )
 
 from gnumakebase import GNUMakeTestBase
-from linearpipeline import LinearPipelineTest
+from linearpipelinebase import LinearPipelineTestBase
 import bsstest
 
 class GNUMakeLinearPipelineTest(
-    LinearPipelineTest,
+    LinearPipelineTestBase,
     GNUMakeTestBase,
 ):
     def _set_up(self, temp_dir):

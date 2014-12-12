@@ -2,7 +2,7 @@ from bsstest import BSSTest
 import os
 import sys
 
-class LinearPipelineTest(BSSTest):
+class LinearPipelineTestBase(BSSTest):
     def __init__(self, depth):
         self._depth = depth
 
