@@ -1,6 +1,7 @@
 import argparse
 import collections
 import contextlib
+import math
 import shutil
 import subprocess
 import sys
@@ -59,10 +60,77 @@ class BSSTest(object):
     def _wait_for_stamp_update(self):
         time.sleep(temp_file_system_stamp_resolution())
 
-def _sanitize_gnuplot_string(string):
-    return string  # TODO(strager)
+class PlotFile(object):
+    def __init__(self, plot_file):
+        self.__file = plot_file
 
-def create_plot(data, file_name):
+    @staticmethod
+    def sanitize(string):
+        return string  # TODO(strager)
+
+    @staticmethod
+    def gnuplot(plot_file_name):
+        subprocess.check_call(['gnuplot', plot_file_name])
+
+    def begin_multiplot(self, layout=None):
+        self.__file.write('set multiplot')
+        if layout is not None:
+            self.__file.write(' layout {},{}'.format(
+                PlotFile.sanitize(int(layout[0])),
+                PlotFile.sanitize(int(layout[1])),
+            ))
+        self.__file.write('\n')
+
+    def end_multiplot(self):
+        self.__file.write('unset multiplot\n')
+
+    def write_gif_header(self, output_file_name):
+        self.__file.write('set terminal gif\n')
+        self.__file.write('set output "{}"\n'.format(
+            PlotFile.sanitize(output_file_name),
+        ))
+
+    def write_plot(
+        self,
+        series_points,  # {'series', [(x, y), ...]), ...}
+        x_label=None,
+        y_label=None,
+    ):
+        if x_label is not None:
+            self.__file.write('set xlabel "{}"\n'.format(
+                PlotFile.sanitize(x_label),
+            ))
+        if y_label is not None:
+            self.__file.write('set ylabel "{}"\n'.format(
+                PlotFile.sanitize(y_label),
+            ))
+        self.__file.write('plot {}\n'.format(
+            ', '.join(
+                '"-" title "{}" with linespoints'
+                    .format(PlotFile.sanitize(series_name))
+                for series_name in series_points.iterkeys()
+            )
+        ))
+        for points in series_points.itervalues():
+            for (x, y) in points:
+                self.__file.write(' '.join([
+                    PlotFile.sanitize(str(x)),
+                    PlotFile.sanitize(str(y)),
+                ]) + '\n')
+            self.__file.write('e\n')
+
+    def flush(self):
+        self.__file.flush()
+
+@contextlib.contextmanager
+def temp_plot_file():
+    with tempfile.NamedTemporaryFile('w') as temp_file:
+        plot_file = PlotFile(temp_file)
+        yield plot_file
+        plot_file.flush()
+        PlotFile.gnuplot(temp_file.name)
+
+def plot_test_data(plot_file, data):
     """
     data is [
         (BSSTest instance, time),
@@ -73,45 +141,25 @@ def create_plot(data, file_name):
     data_by_class = collections.defaultdict(list)
     for pair in data:
         data_by_class[pair[0].__class__].append(pair)
+    plot_file.write_plot(
+        x_label=next(data_by_class.iterkeys()).fields[0],
+        y_label='Time (seconds)',
+        series_points={
+            cls.name: [
+                (instance.inputs[0], time)
+                for (instance, time) in data
+            ]
+            for (cls, data) in data_by_class.iteritems()
+        },
+    )
 
-    with tempfile.NamedTemporaryFile('w') as plot_file:
-        plot_file.write('set terminal gif\n')
-        plot_file.write('set output "{}"\n'.format(
-            _sanitize_gnuplot_string(file_name),
-        ))
-        plot_file.write('set xlabel "{}"\n'.format(
-            _sanitize_gnuplot_string(
-                next(data_by_class.iterkeys()).fields[0],
-            )
-        ))
-        plot_file.write('set ylabel "Time (seconds)"\n')
-
-        plot_file.write('plot {}\n'.format(
-            ', '.join(
-                '"-" title "{}" with linespoints'
-                    .format(cls.name)
-                for cls in data_by_class.iterkeys()
-            )
-        ))
-        for (cls, data) in data_by_class.iteritems():
-            for (instance, time) in data:
-                plot_file.write(' '.join([
-                    str(instance.inputs[0]),
-                    str(time),
-                ]) + '\n')
-            plot_file.write('e\n')
-
-        plot_file.flush()
-        subprocess.check_call(['gnuplot', plot_file.name])
-
-def test_and_plot(classes, args, plot_file_name):
+def yield_test_data(classes, args):
     test_data = []
     for cls in classes:
         for input in cls.default_inputs(args):
             instance = cls(*input)
             time = instance.test()
-            test_data.append((instance, time))
-    create_plot(test_data, file_name=plot_file_name)
+            yield (instance, time)
 
 def arg_parser():
     arg_parser = argparse.ArgumentParser()
@@ -128,8 +176,32 @@ def sub_main(classes):
     for cls in classes:
         cls._augment_arg_parser(parser)
     args = parser.parse_args()
-    test_and_plot(
-        classes,
-        args=args,
-        plot_file_name='plot.gif',
-    )
+    test_data = list(yield_test_data(classes, args))
+    with temp_plot_file() as plot_file:
+        plot_file.write_gif_header('plot.gif')
+        plot_test_data(plot_file, test_data)
+
+def layout_for_plot_count(count):
+    # Find a value N which fits all plots in an NxN grid.
+    square_root = math.ceil(math.sqrt(count))
+    # Prefer stacking graphs vertically.  For example,
+    # create a 3-row 2-column grid for 6-count.
+    rows = square_root
+    columns = math.ceil(float(count) / rows)
+    return (int(rows), int(columns))
+
+def main(class_groups):
+    parser = arg_parser()
+    for classes in class_groups:
+        for cls in classes:
+            cls._augment_arg_parser(parser)
+    args = parser.parse_args()
+    with temp_plot_file() as plot_file:
+        plot_file.write_gif_header('plot.gif')
+        plot_file.begin_multiplot(
+            layout=layout_for_plot_count(len(class_groups)),
+        )
+        for classes in class_groups:
+            test_data = list(yield_test_data(classes, args))
+            plot_test_data(plot_file, test_data)
+        plot_file.end_multiplot()

@@ -10,16 +10,17 @@ import importlib
 import lib.bsstest
 
 tests = [
-    'eyeofmordor',
-    'gnumake',
-    'ninja',
+    'linear.fixedincremental.eyeofmordor',
+    'linear.fixedincremental.gnumake',
+    'linear.fixedincremental.ninja',
 ]
 
+test_classes = []
+for test in tests:
+    module = importlib.import_module(test)
+    test_classes += module.test_classes
+
 def main():
-    test_classes = []
-    for test in tests:
-        module = importlib.import_module(test)
-        test_classes += module.test_classes
     lib.bsstest.sub_main(test_classes)
 
 if __name__ == '__main__':
