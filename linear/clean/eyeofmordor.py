@@ -16,7 +16,7 @@ class Test(EyeOfMordorLinearTestBase):
 test_classes = [Test]
 
 def main():
-    lib.bsstest.test_and_plot(test_classes)
+    lib.bsstest.sub_main(test_classes)
 
 if __name__ == '__main__':
     main()

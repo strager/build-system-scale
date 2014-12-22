@@ -7,9 +7,23 @@ class LinearTestBase(BSSTest):
         super(LinearTestBase, self).__init__()
         self._depth = depth
 
+    @classmethod
+    def _augment_arg_parser(cls, arg_parser):
+        super(LinearTestBase, cls) \
+            ._augment_arg_parser(arg_parser)
+        if arg_parser.has_action('depths'):
+            return
+        arg_parser.add_argument(
+            'depths',
+            help='Length of the linear dependency chain',
+            metavar='DEPTH',
+            nargs='+',
+            type=int,
+        )
+
     @staticmethod
-    def default_inputs():
-        return [(int(arg),) for arg in sys.argv[1:]]
+    def default_inputs(args):
+        return [(arg,) for arg in args.depths]
 
     fields = ('depth',)
 

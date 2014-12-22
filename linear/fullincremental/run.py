@@ -20,7 +20,7 @@ def main():
     for test in tests:
         module = importlib.import_module(test)
         test_classes += module.test_classes
-    lib.bsstest.test_and_plot(test_classes)
+    lib.bsstest.sub_main(test_classes)
 
 if __name__ == '__main__':
     main()

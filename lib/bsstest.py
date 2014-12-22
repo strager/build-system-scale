@@ -1,3 +1,4 @@
+import argparse
 import collections
 import contextlib
 import shutil
@@ -47,6 +48,10 @@ class BSSTest(object):
             self._run(temp_dir)
             end = get_time()
             return end - start
+
+    @classmethod
+    def _augment_arg_parser(cls, arg_parser):
+        pass
 
     def _set_up(self, temp_dir):
         pass
@@ -99,11 +104,32 @@ def create_plot(data, file_name):
         plot_file.flush()
         subprocess.check_call(['gnuplot', plot_file.name])
 
-def test_and_plot(classes, plot_file_name='plot.gif'):
+def test_and_plot(classes, args, plot_file_name):
     test_data = []
     for cls in classes:
-        for input in cls.default_inputs():
+        for input in cls.default_inputs(args):
             instance = cls(*input)
             time = instance.test()
             test_data.append((instance, time))
     create_plot(test_data, file_name=plot_file_name)
+
+def arg_parser():
+    arg_parser = argparse.ArgumentParser()
+    def has_action(name):
+        return any(
+            action.dest == name
+            for action in arg_parser._actions
+        )
+    setattr(arg_parser, 'has_action', has_action)
+    return arg_parser
+
+def sub_main(classes):
+    parser = arg_parser()
+    for cls in classes:
+        cls._augment_arg_parser(parser)
+    args = parser.parse_args()
+    test_and_plot(
+        classes,
+        args=args,
+        plot_file_name='plot.gif',
+    )

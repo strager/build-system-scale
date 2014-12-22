@@ -8,13 +8,27 @@ class FixedIncrementalTestBase(LinearTestBase):
             .__init__(depth)
         self._incremental_depth = incremental_depth
 
+    @classmethod
+    def _augment_arg_parser(cls, arg_parser):
+        super(FixedIncrementalTestBase, cls) \
+            ._augment_arg_parser(arg_parser)
+        if arg_parser.has_action('incremental_depth'):
+            return
+        arg_parser.add_argument(
+            '--incremental-depth',
+            dest='incremental_depth',
+            help='Number of targets to invalidate',
+            metavar='DEPTH',
+            required=True,
+            type=int,
+        )
+
     @staticmethod
-    def default_inputs():
-        argv = sys.argv[1:]
-        incremental_depth = int(argv[0])
+    def default_inputs(args):
+        incremental_depth = args.incremental_depth
         return [
-            (int(arg), incremental_depth)
-            for arg in argv[1:]
+            (arg, incremental_depth)
+            for arg in args.depths
         ]
 
     fields = ('depth', 'incremental_depth')
