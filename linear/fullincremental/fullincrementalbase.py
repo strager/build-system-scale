@@ -6,6 +6,7 @@ class FullIncrementalTestBase(LinearTestBase):
         super(FullIncrementalTestBase, self) \
             ._set_up(temp_dir)
         self._build(temp_dir)
+        self._wait_for_stamp_update()
         with open(os.path.join(temp_dir, 'file_1'), 'w') \
                 as f:
             f.write('new content')
