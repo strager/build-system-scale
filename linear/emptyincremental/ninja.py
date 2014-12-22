@@ -12,8 +12,8 @@ from linear.ninjabase import NinjaLinearTestBase
 import lib.bsstest
 
 class Test(
-    NinjaLinearTestBase,
     EmptyIncrementalTestBase,
+    NinjaLinearTestBase,
 ):
     pass
 

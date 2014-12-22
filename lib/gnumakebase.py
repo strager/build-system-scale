@@ -2,7 +2,7 @@ import bsstest
 import os
 import subprocess
 
-class GNUMakeTestBase(object):
+class GNUMakeTestBase(bsstest.BSSTest):
     name = 'gnumake'
 
     def _makefile_path(self, temp_dir):

@@ -1,4 +1,4 @@
 import bsstest
 
-class EyeOfMordorTestBase(object):
+class EyeOfMordorTestBase(bsstest.BSSTest):
     name = 'eyeofmordor'

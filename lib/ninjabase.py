@@ -2,7 +2,7 @@ import bsstest
 import os
 import subprocess
 
-class NinjaTestBase(object):
+class NinjaTestBase(bsstest.BSSTest):
     name = 'ninja'
 
     def _build_ninja_path(self, temp_dir):

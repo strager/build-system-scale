@@ -4,6 +4,7 @@ import sys
 
 class LinearTestBase(BSSTest):
     def __init__(self, depth):
+        super(LinearTestBase, self).__init__()
         self._depth = depth
 
     @staticmethod

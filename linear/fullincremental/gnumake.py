@@ -12,8 +12,8 @@ from linear.gnumakebase import GNUMakeLinearTestBase
 import lib.bsstest
 
 class Test(
-    GNUMakeLinearTestBase,
     FullIncrementalTestBase,
+    GNUMakeLinearTestBase,
 ):
     pass
 

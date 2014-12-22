@@ -12,8 +12,8 @@ from linear.emptyincremental.emptyincrementalbase \
 import lib.bsstest
 
 class Test(
-    EyeOfMordorLinearTestBase,
     EmptyIncrementalTestBase,
+    EyeOfMordorLinearTestBase,
 ):
     def _run(self, temp_dir):
         pass
