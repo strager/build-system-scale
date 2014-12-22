@@ -6,10 +6,11 @@ sys.path.append(
     os.path.join(os.path.dirname(__file__), '..', '..'),
 )
 
+from linear.clean.cleanbase import CleanTestBase
 from linear.ninjabase import NinjaLinearTestBase
 import lib.bsstest
 
-class Test(NinjaLinearTestBase):
+class Test(CleanTestBase, NinjaLinearTestBase):
     pass
 
 test_classes = [Test]

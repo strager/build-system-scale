@@ -6,10 +6,11 @@ sys.path.append(
     os.path.join(os.path.dirname(__file__), '..', '..'),
 )
 
+from linear.clean.cleanbase import CleanTestBase
 from linear.gnumakebase import GNUMakeLinearTestBase
 import lib.bsstest
 
-class Test(GNUMakeLinearTestBase):
+class Test(CleanTestBase, GNUMakeLinearTestBase):
     pass
 
 test_classes = [Test]

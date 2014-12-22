@@ -3,6 +3,8 @@ import os
 import sys
 
 class FixedIncrementalTestBase(LinearTestBase):
+    title = 'Linear Fixed Incremental'
+
     def __init__(self, depth, incremental_depth):
         super(FixedIncrementalTestBase, self) \
             .__init__(depth)

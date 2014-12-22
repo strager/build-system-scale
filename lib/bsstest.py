@@ -93,17 +93,21 @@ class PlotFile(object):
     def write_plot(
         self,
         series_points,  # {'series', [(x, y), ...]), ...}
+        title=None,
         x_label=None,
         y_label=None,
     ):
-        if x_label is not None:
-            self.__file.write('set xlabel "{}"\n'.format(
-                PlotFile.sanitize(x_label),
-            ))
-        if y_label is not None:
-            self.__file.write('set ylabel "{}"\n'.format(
-                PlotFile.sanitize(y_label),
-            ))
+        options = {
+            'title': title,
+            'xlabel': x_label,
+            'ylabel': y_label,
+        }
+        for (name, value) in options.iteritems():
+            if value is not None:
+                self.__file.write('set {} "{}"\n'.format(
+                    PlotFile.sanitize(name),
+                    PlotFile.sanitize(value),
+                ))
         self.__file.write('plot {}\n'.format(
             ', '.join(
                 '"-" title "{}" with linespoints'
@@ -130,7 +134,7 @@ def temp_plot_file():
         plot_file.flush()
         PlotFile.gnuplot(temp_file.name)
 
-def plot_test_data(plot_file, data):
+def plot_test_data(plot_file, data, title=None):
     """
     data is [
         (BSSTest instance, time),
@@ -141,8 +145,14 @@ def plot_test_data(plot_file, data):
     data_by_class = collections.defaultdict(list)
     for pair in data:
         data_by_class[pair[0].__class__].append(pair)
+    if not data_by_class:
+        # No data to plot.
+        plot_file.write_plot({})
+        return
+    first_class = next(data_by_class.iterkeys())
     plot_file.write_plot(
-        x_label=next(data_by_class.iterkeys()).fields[0],
+        title=first_class.title,
+        x_label=first_class.fields[0],
         y_label='Time (seconds)',
         series_points={
             cls.name: [

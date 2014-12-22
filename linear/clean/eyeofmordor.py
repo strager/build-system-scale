@@ -6,10 +6,11 @@ sys.path.append(
     os.path.join(os.path.dirname(__file__), '..', '..'),
 )
 
+from linear.clean.cleanbase import CleanTestBase
 from linear.eyeofmordorbase import EyeOfMordorLinearTestBase
 import lib.bsstest
 
-class Test(EyeOfMordorLinearTestBase):
+class Test(CleanTestBase, EyeOfMordorLinearTestBase):
     def _run(self, temp_dir):
         self._build(temp_dir)
 

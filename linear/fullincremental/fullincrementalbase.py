@@ -2,6 +2,8 @@ from linear.linearbase import LinearTestBase
 import os
 
 class FullIncrementalTestBase(LinearTestBase):
+    title = 'Linear Full Incremental'
+
     def _set_up(self, temp_dir):
         super(FullIncrementalTestBase, self) \
             ._set_up(temp_dir)
