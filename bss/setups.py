@@ -2,6 +2,9 @@ import os
 
 __dirty_iteration = 0
 
+def node_path(node, temp_dir):
+    return os.path.join(temp_dir, str(node))
+
 def dirty_node(node, temp_dir):
     global __dirty_iteration
     __dirty_iteration += 1
@@ -13,8 +16,7 @@ def dirty_node(node, temp_dir):
     )
     assert len(contents) == 42
 
-    path = os.path.join(temp_dir, str(node))
-    with file(path, 'wb') as f:
+    with file(node_path(node, temp_dir), 'wb') as f:
         f.write(contents)
 
 class Setup(object):
@@ -71,13 +73,14 @@ class FixedIncrementalSetup(Setup):
                     build_nodes=build_nodes,
                     dag=dag,
                 ):
-            dirty_node(node, temp_dir=temp_dir)
+            os.remove(node_path(node, temp_dir=temp_dir))
 
     @staticmethod
     def __dirty_nodes(args, build_nodes, dag):
         # HACK(strager): This only works for LinearDAG.
         assert dag.__class__.__name__ == 'LinearDAG'
-        all_nodes = list(reversed(sorted(dag.all_nodes())))
+        all_nodes = sorted(frozenset(dag.all_nodes())
+            - frozenset(dag.leaf_nodes()))
         return (all_nodes[i] for i in xrange(0, min(
             len(all_nodes),
             args.incremental_count,
