@@ -24,11 +24,12 @@ class GNUMakeBuilder(Builder):
             = GNUMakeBuilder.__makefile_path(temp_dir)
         with open(makefile_path, 'w') as makefile:
             for from_node in dag.all_nodes():
-                for to_node in dag.nodes_from(from_node):
+                to_nodes = list(dag.nodes_from(from_node))
+                if to_nodes:
                     makefile.write(
-                       '{}: {}\n\t@cp $< $@\n'.format(
+                       '{}: {}\n\t@cat $^ >$@\n'.format(
                             from_node,
-                            to_node,
+                            ' '.join(map(str, to_nodes)),
                         ),
                     )
 
@@ -58,13 +59,16 @@ class NinjaBuilder(Builder):
             = NinjaBuilder.__build_ninja_path(temp_dir)
         with open(build_ninja_path, 'w') as ninja:
             ninja.write('ninja_required_version = 1.0\n')
-            ninja.write('rule cp\n command = cp $in $out\n')
+            ninja.write(
+                'rule cp\n command = cat $in >$out\n',
+            )
             for from_node in dag.all_nodes():
-                for to_node in dag.nodes_from(from_node):
-                    ninja.write('build {}: cp {}\n'.format(
-                        from_node,
-                        to_node,
-                    ))
+                to_nodes = list(dag.nodes_from(from_node))
+                if to_nodes:
+                    to_node_list \
+                        = ' '.join(map(str, to_nodes))
+                    ninja.write('build {}: cp {}\n'
+                        .format(from_node, to_node_list))
 
     @staticmethod
     def build(temp_dir, nodes, args):

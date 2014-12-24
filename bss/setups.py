@@ -77,14 +77,45 @@ class FixedIncrementalSetup(Setup):
 
     @staticmethod
     def __dirty_nodes(args, build_nodes, dag):
-        # HACK(strager): This only works for LinearDAG.
-        assert dag.__class__.__name__ == 'LinearDAG'
-        all_nodes = sorted(frozenset(dag.all_nodes())
-            - frozenset(dag.leaf_nodes()))
-        return (all_nodes[i] for i in xrange(0, min(
-            len(all_nodes),
-            args.incremental_count,
-        )))
+        dirty_node_count = args.incremental_count
+        if dirty_node_count <= 0:
+            return []
+
+        # We cannot dirty leaf nodes.
+        leaves = frozenset(dag.leaf_nodes())
+
+        # Mark build_nodes as dirty.
+        dirty_nodes = set()
+        for node in build_nodes:
+            if node in leaves:
+                continue
+            dirty_nodes.add(node)
+            if len(dirty_nodes) == dirty_node_count:
+                return dirty_nodes
+
+        # Mark dependencies of build_nodes as dirty, and
+        # their dependencies, and so on.
+        queue = list(dirty_nodes)
+        while queue:
+            node = queue.pop()
+            if node in leaves:
+                continue
+            pointers = frozenset(dag.nodes_to(node))
+            if pointers - dirty_nodes:
+                # If we mark node as dirty, it would cause
+                # nodes we haven't marked dirty yet to be
+                # implicitly dirty (in the build system),
+                # but only if you can trace them back to any
+                # of build_nodes.
+                raise NotImplementedError()
+            dirty_nodes.add(node)
+            if len(dirty_nodes) == dirty_node_count:
+                return dirty_nodes
+            queue.extend(dag.nodes_from(node))
+
+        assert dirty_nodes \
+            == frozenset(dag.all_nodes()) - leaves
+        return dirty_nodes
 
 class FullIncrementalSetup(Setup):
     @staticmethod
