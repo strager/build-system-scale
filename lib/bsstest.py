@@ -185,7 +185,6 @@ def plot_test_data(plot_file, data, title=None):
     )
 
 def yield_test_data(classes, args):
-    test_data = []
     for cls in classes:
         for input in cls.default_inputs(args):
             instance = cls(*input)
