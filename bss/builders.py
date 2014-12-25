@@ -83,7 +83,46 @@ class NinjaBuilder(Builder):
     def wait_for_stamp_update():
         bss.util.wait_for_temp_file_system_stamp_update()
 
+class TupBuilder(Builder):
+    name = 'tup'
+
+    @staticmethod
+    def set_up(temp_dir, dag, args):
+        tupfile_ini_path \
+            = os.path.join(temp_dir, 'Tupfile.ini')
+        with open(tupfile_ini_path, 'w') as tupfile_ini:
+            pass
+
+        tupfile_path = os.path.join(temp_dir, 'Tupfile')
+        with open(tupfile_path, 'w') as tupfile:
+            # Tup seems to require rules to be specified in
+            # sorted order.  That is, non-leaf nodes need
+            # the rule creating the node to preceed rules
+            # depending upon the node.
+            visited_nodes = set()
+            for (from_node, to_nodes) \
+                    in reversed(list(dag.flatten())):
+                if to_nodes:
+                    tupfile.write(
+                        ': {} |> cat %f >%o |> {}\n'.format(
+                            ' '.join(map(str, to_nodes)),
+                            from_node,
+                        ),
+                    )
+
+    @staticmethod
+    def build(temp_dir, nodes, args):
+        subprocess.check_call(
+            ['tup', '-j1'] + map(str, nodes),
+            cwd=temp_dir,
+        )
+
+    @staticmethod
+    def wait_for_stamp_update():
+        bss.util.wait_for_temp_file_system_stamp_update()
+
 all_builders = [
     GNUMakeBuilder,
     NinjaBuilder,
+    TupBuilder,
 ]
