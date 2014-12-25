@@ -13,6 +13,7 @@ class DAGSet(object):
 
 class FanOutDAGSet(DAGSet):
     name = 'Fan-Out'
+    shortname = 'fan-out'
     variable_label = 'Fan-Out (Edges)'
 
     @staticmethod
@@ -23,7 +24,7 @@ class FanOutDAGSet(DAGSet):
             help='Width of the dependency graph',
             metavar='EDGES',
             nargs='+',
-            required=False,
+            required=True,
             type=int,
         )
 
@@ -40,6 +41,7 @@ class FanOutDAGSet(DAGSet):
 
 class LinearDAGSet(DAGSet):
     name = 'Linear'
+    shortname = 'linear'
     variable_label = 'Dependency Depth'
 
     @staticmethod
@@ -50,7 +52,7 @@ class LinearDAGSet(DAGSet):
             help='Length of the linear dependency chain',
             metavar='DEPTH',
             nargs='+',
-            required=False,
+            required=True,
             type=int,
         )
 
@@ -63,6 +65,7 @@ class LinearDAGSet(DAGSet):
 
 class UniformFanOutDAGSet(DAGSet):
     name = 'Uniform Fan-Out'
+    shortname = 'uniform-fan-out'
     variable_label = 'Total Nodes'
 
     @staticmethod
@@ -96,7 +99,7 @@ class UniformFanOutDAGSet(DAGSet):
             help='Number of nodes in the graph',
             metavar='NODES',
             nargs='+',
-            required=False,
+            required=True,
             type=UniformFanOutDAGSet.__parse_dag,
         )
 

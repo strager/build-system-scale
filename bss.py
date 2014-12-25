@@ -164,12 +164,98 @@ def prepare_parser(parser, builders, dag_sets, setups):
     for setup in setups:
         setup.prepare_parser(parser)
 
+def prepare_enabled_parser(
+    parser,
+    builders,
+    dag_sets,
+    setups,
+):
+    def add_shortname_list_argument(
+        name,
+        values,
+        *kargs,
+        **kwargs
+    ):
+        shortname_to_value \
+            = {value.shortname: value for value in values}
+        class FromShortnameAction(argparse.Action):
+            def __call__(
+                self,
+                parser,
+                namespace,
+                values,
+                option_string=None,
+            ):
+                setattr(
+                    namespace,
+                    self.dest,
+                    [
+                        shortname_to_value[shortname]
+                        for shortname in values
+                    ],
+                )
+        parser.add_argument(
+            name,
+            action=FromShortnameAction,
+            choices=shortname_to_value.keys(),
+            default=values,
+            nargs='+',
+            required=False,
+            type=str,
+            *kargs,
+            **kwargs
+        )
+
+    add_shortname_list_argument(
+        '--builders',
+        builders,
+        dest='builders',
+        help='Build systems to test',
+        metavar='BUILDER',
+    )
+    add_shortname_list_argument(
+        '--dags',
+        dag_sets,
+        dest='dag_sets',
+        help='Graphs to test with',
+        metavar='DAG',
+    )
+    add_shortname_list_argument(
+        '--scenarios',
+        setups,
+        dest='setups',
+        help='Test cases to run',
+        metavar='SCENARIO',
+    )
+
 def main():
     builders = bss.builders.all_builders
     dag_sets = bss.dagsets.all_dag_sets
     setups = bss.setups.all_setups
 
+    # Figure out the list of Builders, DAGSets, and Setups
+    # the user cares about.
+    parser = argparse.ArgumentParser(add_help=False)
+    prepare_enabled_parser(
+        parser,
+        builders=builders,
+        dag_sets=dag_sets,
+        setups=setups,
+    )
+    (args, _) = parser.parse_known_args()
+    builders = args.builders
+    dag_sets = args.dag_sets
+    setups = args.setups
+
+    # Parse options only for the requested Builders,
+    # DAGSets, and Setups.
     parser = argparse.ArgumentParser()
+    prepare_enabled_parser(
+        parser,
+        builders=builders,
+        dag_sets=dag_sets,
+        setups=setups,
+    )
     prepare_parser(
         parser,
         builders=builders,
@@ -177,6 +263,9 @@ def main():
         setups=setups,
     )
     args = parser.parse_args()
+    builders = args.builders
+    dag_sets = args.dag_sets
+    setups = args.setups
 
     runs = list(run_configuration_sets(
         args=args,

@@ -13,6 +13,7 @@ class Builder(object):
 
 class GNUMakeBuilder(Builder):
     name = 'GNU Make'
+    shortname = 'gnu-make'
 
     @staticmethod
     def __makefile_path(temp_dir):
@@ -48,6 +49,7 @@ class GNUMakeBuilder(Builder):
 
 class NinjaBuilder(Builder):
     name = 'Ninja'
+    shortname = 'ninja'
 
     @staticmethod
     def __build_ninja_path(temp_dir):
@@ -85,6 +87,7 @@ class NinjaBuilder(Builder):
 
 class TupBuilder(Builder):
     name = 'tup'
+    shortname = 'tup'
 
     @staticmethod
     def set_up(temp_dir, dag, args):

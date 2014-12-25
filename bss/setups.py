@@ -25,6 +25,8 @@ class Setup(object):
         pass
 
 class CleanSetup(Setup):
+    shortname = 'clean'
+
     @staticmethod
     def name(args):
         return 'Clean'
@@ -35,6 +37,8 @@ class CleanSetup(Setup):
             dirty_node(node, temp_dir=temp_dir)
 
 class FixedIncrementalSetup(Setup):
+    shortname = 'fixed-incremental'
+
     @staticmethod
     def name(args):
         return '{} (Fixed) Incremental'.format(
@@ -118,6 +122,8 @@ class FixedIncrementalSetup(Setup):
         return dirty_nodes
 
 class FullIncrementalSetup(Setup):
+    shortname = 'full-incremental'
+
     @staticmethod
     def name(args):
         return 'Full Incremental'
@@ -141,6 +147,8 @@ class FullIncrementalSetup(Setup):
             dirty_node(node, temp_dir=temp_dir)
 
 class NoOpIncrementalSetup(Setup):
+    shortname = 'empty-incremental'
+
     @staticmethod
     def name(args):
         return 'Empty Incremental'
