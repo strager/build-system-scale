@@ -42,18 +42,13 @@ def dag_png(dag, output_file_path):
 
 def dag_dot(dag, output_file):
     output_file.write('digraph dag {\n')
-    visited_nodes = set()
-    queue = set(dag.root_nodes())
-    while queue:
-        node = queue.pop()
-        for edge_node in dag.nodes_from(node):
+    for (from_node, to_nodes) in dag.flatten():
+        for to_node in to_nodes:
             output_file.write(
-                '  {} -> {};\n'.format(node, edge_node),
+                '  {} -> {};\n'.format(from_node, to_node),
             )
-            if edge_node not in visited_nodes:
-                queue.add(edge_node)
         else:
-            output_file.write('  {};\n'.format(node))
+            output_file.write('  {};\n'.format(from_node))
     output_file.write('}\n')
 
 class DAG(object):
@@ -71,6 +66,19 @@ class DAG(object):
         for test_node in frozenset(self.all_nodes()):
             if node in self.nodes_from(test_node):
                 yield test_node
+
+    def flatten(self, starting_nodes=None):
+        if starting_nodes is None:
+            starting_nodes = self.root_nodes()
+        visited_nodes = set()
+        queue = set(starting_nodes)
+        while queue:
+            node = queue.pop()
+            to_nodes = frozenset(self.nodes_from(node))
+            yield (node, to_nodes)
+            for to_node in self.nodes_from(node):
+                if to_node not in visited_nodes:
+                    queue.add(to_node)
 
 class LinearDAG(DAG):
     def __init__(self, depth):
