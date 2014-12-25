@@ -93,7 +93,7 @@ class TupBuilder(Builder):
     def set_up(temp_dir, dag, args):
         tupfile_ini_path \
             = os.path.join(temp_dir, 'Tupfile.ini')
-        with open(tupfile_ini_path, 'w') as tupfile_ini:
+        with open(tupfile_ini_path, 'w'):
             pass
 
         tupfile_path = os.path.join(temp_dir, 'Tupfile')
@@ -102,7 +102,6 @@ class TupBuilder(Builder):
             # sorted order.  That is, non-leaf nodes need
             # the rule creating the node to preceed rules
             # depending upon the node.
-            visited_nodes = set()
             for (from_node, to_nodes) \
                     in reversed(list(dag.flatten())):
                 if to_nodes:
