@@ -128,12 +128,18 @@ class UniformFanOutDAG(DAG):
     def root_nodes(self):
         return [1]
 
-    def __nodes_at_depth(self, depth):
-        fan_out = self.__fan_out
+    @staticmethod
+    def node_count(depth, fan_out):
         if fan_out == 1:
             return depth
         else:
             return (fan_out ** depth - 1) / (fan_out - 1)
+
+    def __nodes_at_depth(self, depth):
+        return UniformFanOutDAG.node_count(
+            depth=depth,
+            fan_out=self.__fan_out,
+        )
 
     def leaf_nodes(self):
         return xrange(
