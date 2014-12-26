@@ -100,23 +100,25 @@ class TupBuilder(Builder):
         tupfile_path = os.path.join(temp_dir, 'Tupfile')
         with open(tupfile_path, 'w') as tupfile:
             # Tup seems to require rules to be specified in
-            # sorted order.  That is, non-leaf nodes need
-            # the rule creating the node to preceed rules
-            # depending upon the node.
-            for (from_node, to_nodes) \
-                    in reversed(list(dag.flatten())):
-                to_nodes = dag.nodes_from(from_node)
-                if not to_nodes:
-                    continue
-                to_nodes_string \
-                    = ' '.join(map(str, to_nodes))
-                tupfile.write(
-                    ': {} |> head -n1 %f >%o |> {}\n'
-                        .format(
-                            to_nodes_string,
-                            from_node,
-                        ),
-                )
+            # topologically-sorted order.  That is, non-leaf
+            # nodes need the rule creating the node to
+            # preceed rules depending upon the node.
+            node_levels \
+                = dag.all_nodes_sorted_topologically()
+            for nodes in node_levels:
+                for from_node in nodes:
+                    to_nodes = dag.nodes_from(from_node)
+                    if not to_nodes:
+                        continue
+                    to_nodes_string \
+                        = ' '.join(map(str, to_nodes))
+                    tupfile.write(
+                        ': {} |> head -n1 %f >%o |> {}\n'
+                            .format(
+                                to_nodes_string,
+                                from_node,
+                            ),
+                    )
 
     @staticmethod
     def build(temp_dir, nodes, args):

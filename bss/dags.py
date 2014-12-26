@@ -1,5 +1,7 @@
 #!/usr/bin/env python2.7
 
+import collections
+import itertools
 import subprocess
 import tempfile
 import unittest
@@ -78,6 +80,40 @@ class DAG(object):
             for to_node in to_nodes:
                 if to_node not in visited_nodes:
                     queue.add(to_node)
+
+    def all_nodes_sorted_topologically(self):
+        # Algorithm borrowed from @ovgolovin:
+        # http://stackoverflow.com/a/15039202
+        # Licensed under CC BY-SA 3.0:
+        # http://creativecommons.org/licenses/by-sa/3.0/
+
+        levels_by_name = {}
+        names_by_level = collections.defaultdict(set)
+
+        def walk_depth_first(name):
+            if name in levels_by_name:
+                return levels_by_name[name]
+            children = self.nodes_from(name)
+            level = 0
+            if children:
+                level = 1 + max(
+                    walk_depth_first(lname)
+                    for lname in children
+                )
+            levels_by_name[name] = level
+            names_by_level[level].add(name)
+            return level
+
+        for name in self.all_nodes():
+            walk_depth_first(name)
+
+        return list(itertools.takewhile(
+            lambda x: x is not None,
+            (
+                names_by_level.get(i, None)
+                for i in itertools.count()
+            ),
+        ))
 
 class LinearDAG(DAG):
     def __init__(self, depth):
