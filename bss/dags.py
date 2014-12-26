@@ -72,9 +72,10 @@ class DAG(object):
         queue = set(starting_nodes)
         while queue:
             node = queue.pop()
+            visited_nodes.add(node)
             to_nodes = frozenset(self.nodes_from(node))
             yield (node, to_nodes)
-            for to_node in self.nodes_from(node):
+            for to_node in to_nodes:
                 if to_node not in visited_nodes:
                     queue.add(to_node)
 
