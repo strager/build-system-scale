@@ -4,86 +4,10 @@ import argparse
 import bss.builders
 import bss.dagsets
 import bss.gnuplot
+import bss.run
 import bss.setups
 import bss.util
 import collections
-
-Run = collections.namedtuple('Run', [
-    'builder',
-    'dag',
-    'dag_set',
-    'measurement',
-    'setup',
-    'variable',
-])
-
-def run_configuration_once(args, builder, dag, setup):
-    build_nodes = dag.root_nodes()
-    with bss.util.temporary_directory() as temp_dir:
-        builder.set_up(
-            args=args,
-            dag=dag,
-            temp_dir=temp_dir,
-        )
-        setup.set_up(
-            args=args,
-            build_nodes=build_nodes,
-            builder=builder,
-            dag=dag,
-            temp_dir=temp_dir,
-        )
-        start = bss.util.get_time()
-        builder.build(
-            args=args,
-            nodes=build_nodes,
-            temp_dir=temp_dir,
-        )
-        end = bss.util.get_time()
-        return end - start
-
-def run_configuration(args, builder, dag, setup):
-    measurements = [run_configuration_once(
-        args=args,
-        builder=builder,
-        dag=dag,
-        setup=setup,
-    ) for _ in xrange(args.iterations)]
-    return min(measurements)
-
-def run_configuration_set(args, builder, dag_set, setup):
-    dags = dag_set.dags(args)
-    for (variable, dag) in dags:
-        measurement = run_configuration(
-            args=args,
-            builder=builder,
-            dag=dag,
-            setup=setup,
-        )
-        yield Run(
-            builder=builder,
-            dag=dag,
-            dag_set=dag_set,
-            measurement=measurement,
-            setup=setup,
-            variable=variable,
-        )
-
-def run_configuration_sets(
-    args,
-    builders,
-    dag_sets,
-    setups,
-):
-    for builder in builders:
-        for dag_set in dag_sets:
-            for setup in setups:
-                for run in run_configuration_set(
-                    args=args,
-                    builder=builder,
-                    dag_set=dag_set,
-                    setup=setup,
-                ):
-                    yield run
 
 def plot(runs, args):
     # (dag_set, setup) => builder => runs
@@ -267,7 +191,7 @@ def main():
     dag_sets = args.dag_sets
     setups = args.setups
 
-    runs = list(run_configuration_sets(
+    runs = list(bss.run.run_configurations(
         args=args,
         builders=builders,
         dag_sets=dag_sets,
