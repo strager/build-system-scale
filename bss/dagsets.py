@@ -19,7 +19,7 @@ class DAGSet(object):
         pass
 
 class ChromiumDAGSet(DAGSet):
-    name = 'Chromium (from CMake+Ninja)'
+    name = 'Chromium (from GYP+Ninja)'
     shortname = 'chromium'
     variable_label = 'N/A'
 
