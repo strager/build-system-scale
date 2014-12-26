@@ -3,6 +3,7 @@
 import collections
 import itertools
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -66,6 +67,20 @@ class DAG(object):
         for test_node in frozenset(self.all_nodes()):
             if node in self.nodes_from(test_node):
                 yield test_node
+
+    def dump(self, file=sys.stdout):
+        file.write('Dump of {}:\n'.format(self))
+        file.write('  root_nodes() = {}\n'.format(
+            ' '.join(map(str, self.root_nodes())),
+        ))
+        file.write('  leaf_nodes() = {}\n'.format(
+            ' '.join(map(str, self.leaf_nodes())),
+        ))
+        for (from_node, to_nodes) in self.flatten():
+            file.write('  {} -> {}\n'.format(
+                from_node,
+                ' '.join(map(str, to_nodes)),
+            ))
 
     def flatten(self, starting_nodes=None):
         if starting_nodes is None:
