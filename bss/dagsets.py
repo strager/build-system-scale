@@ -1,15 +1,33 @@
 import bss.dags
 import itertools
 import logging
+import os
 import sys
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler(sys.stderr))
 
+_data_dir = os.path.join(
+    os.path.dirname(__file__),
+    '..',
+    'data',
+)
+
 class DAGSet(object):
     @staticmethod
     def prepare_parser(arg_parser):
         pass
+
+class ChromiumDAGSet(DAGSet):
+    name = 'Chromium (from CMake+Ninja)'
+    shortname = 'chromium'
+    variable_label = 'N/A'
+
+    @staticmethod
+    def dags(args):
+        yield (0, bss.dags.DotDAG(
+            os.path.join(_data_dir, 'chromium.dot'),
+        ))
 
 class FanOutDAGSet(DAGSet):
     name = 'Fan-Out'
@@ -38,6 +56,17 @@ class FanOutDAGSet(DAGSet):
                 depth=depth,
                 fan_out=fan_out,
             ))
+
+class LLVMDAGSet(DAGSet):
+    name = 'LLVM (from CMake+Ninja)'
+    shortname = 'llvm'
+    variable_label = 'N/A'
+
+    @staticmethod
+    def dags(args):
+        yield (0, bss.dags.DotDAG(
+            os.path.join(_data_dir, 'llvm.dot'),
+        ))
 
 class LinearDAGSet(DAGSet):
     name = 'Linear'
@@ -111,7 +140,9 @@ class UniformFanOutDAGSet(DAGSet):
             yield (node_count, dag)
 
 all_dag_sets = [
+    ChromiumDAGSet,
     FanOutDAGSet,
+    LLVMDAGSet,
     LinearDAGSet,
     UniformFanOutDAGSet,
 ]

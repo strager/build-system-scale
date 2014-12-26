@@ -2,6 +2,7 @@
 
 import collections
 import itertools
+import re
 import subprocess
 import sys
 import tempfile
@@ -129,6 +130,88 @@ class DAG(object):
                 for i in itertools.count()
             ),
         ))
+
+class DotDAG(DAG):
+    '''
+    DAG generated from a Graphviz DOT file.
+    '''
+    __ignore_re = re.compile(
+        r'^(?:'
+         'digraph ninja \{'
+         '|\}'
+         '|rankdir=.*'
+         '|(?:node|edge) .*'
+         '|node .*'
+         ')$'
+    )
+    __node_re = re.compile(r'^\s*(\S+)(?:\s+\[.*\])?\s*$')
+    __edge_re = re.compile(
+        r'^\s*(\S+)\s+->\s+(\S+)(?:\s+\[.*\])?\s*$',
+    )
+
+    def __init__(self, dot_path):
+        current_node = [0]
+        def new_node():
+            current_node[0] += 1
+            return current_node[0]
+
+        node_string_nodes \
+            = collections.defaultdict(new_node)
+        edges_from = collections.defaultdict(set)
+        not_leaf_nodes = set()
+        not_root_nodes = set()
+
+        # This parser is hacky.  It only works well on
+        # Ninja-generated DOT files.
+        with file(dot_path, 'r') as dot_file:
+            for line in dot_file:
+                if DotDAG.__ignore_re.match(line):
+                    # Skip ignored lines.
+                    continue
+                match = DotDAG.__node_re.match(line)
+                if match:
+                    node = node_string_nodes[match.group(1)]
+                    edges_from[node]  # Tickle defaultdict.
+                    continue
+                match = DotDAG.__edge_re.match(line)
+                if match:
+                    to_node \
+                        = node_string_nodes[match.group(1)]
+                    from_node \
+                        = node_string_nodes[match.group(2)]
+                    edges_from[from_node].add(to_node)
+                    not_leaf_nodes.add(from_node)
+                    not_root_nodes.add(to_node)
+                    continue
+                raise Exception(
+                    'Parse error: {}'.format(line),
+                )
+
+        self.__all_nodes \
+            = frozenset(node_string_nodes.values())
+        self.__root_nodes \
+            = frozenset(self.__all_nodes - not_root_nodes)
+        self.__leaf_nodes \
+            = frozenset(self.__all_nodes - not_leaf_nodes)
+        self.__edges_from = {
+            from_node: frozenset(to_nodes)
+            for (from_node, to_nodes)
+            in edges_from.iteritems()
+        }
+
+        validate_dag(self)
+
+    def root_nodes(self):
+        return self.__root_nodes
+
+    def leaf_nodes(self):
+        return self.__leaf_nodes
+
+    def all_nodes(self):
+        return self.__all_nodes
+
+    def nodes_from(self, node):
+        return self.__edges_from[node]
 
 class LinearDAG(DAG):
     def __init__(self, depth):
