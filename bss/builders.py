@@ -16,6 +16,12 @@ class GNUMakeBuilder(Builder):
     shortname = 'gnu-make'
 
     @staticmethod
+    def version():
+        return subprocess.check_output(
+            ['make', '--version'],
+        ).strip()
+
+    @staticmethod
     def __makefile_path(temp_dir):
         return os.path.join(temp_dir, 'GNUMakefile')
 
@@ -51,6 +57,12 @@ class GNUMakeBuilder(Builder):
 class NinjaBuilder(Builder):
     name = 'Ninja'
     shortname = 'ninja'
+
+    @staticmethod
+    def version():
+        return subprocess.check_output(
+            ['ninja', '--version'],
+        ).strip()
 
     @staticmethod
     def __build_ninja_path(temp_dir):
@@ -89,6 +101,12 @@ class NinjaBuilder(Builder):
 class TupBuilder(Builder):
     name = 'tup'
     shortname = 'tup'
+
+    @staticmethod
+    def version():
+        return subprocess.check_output(
+            ['tup', '--version'],
+        ).strip()
 
     @staticmethod
     def set_up(temp_dir, dag, args):

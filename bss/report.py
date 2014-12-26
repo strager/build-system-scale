@@ -1,6 +1,9 @@
 import bss.gnuplot
+import bss.util
 import collections
 import contextlib
+import os
+import sys
 import tempfile
 import xml.etree.ElementTree as ET
 import xml.sax.saxutils
@@ -114,7 +117,51 @@ def html_plot_file(html_file, encoding='utf-8'):
         )
         html_file.write('\n')
 
+def write_system_information_html(builders, html_file):
+    (
+        uname_sysname,
+        _uname_nodename,
+        uname_release,
+        uname_version,
+        _uname_machine,
+    ) = os.uname()
+    processors = bss.util.processors_info()
+    html_file.write('''<h2>System information</h2>
+<dl>
+    <dt>Invocation (<code>sys.argv</code>)
+    <dd><pre>{argv}</pre>
+    <dt>Operating system (<code>uname -srv</code>)
+    <dd>{uname_sysname} {uname_release} {uname_version}
+    <dt>Processors
+    <dd>{processors}
+'''.format(
+    argv=e(repr(sys.argv)),
+    processors=(
+        '\n    <dd>'.join(map(e, processors))
+        if processors
+        else '(unavailable)'
+    ),
+    uname_release=e(uname_release),
+    uname_sysname=e(uname_sysname),
+    uname_version=e(uname_version),
+))
+
+    for builder in sorted(
+        builders,
+        key=lambda builder: builder.name,
+    ):
+        html_file.write('''
+    <dt>Version of {builder}
+    <dd><pre>{version}</pre>
+'''.format(
+    builder=e(builder.name),
+    version=e(builder.version()),
+))
+
+    html_file.write('</dl>\n')
+
 def write_report(runs, args):
+    all_runs = list(runs)
     encoding = 'utf-8'
     with file(args.output_html_path, 'w') as html_file:
         html_file.write('''<!DOCTYPE html>
@@ -140,7 +187,7 @@ caption {{
 <div class=graph>
 '''.format(encoding=e(encoding)))
 
-        run_plot_datas = make_run_plot_datas(runs)
+        run_plot_datas = make_run_plot_datas(all_runs)
         with html_plot_file(html_file, encoding='utf-8') \
                 as plot_file:
             multiplot(
@@ -200,6 +247,11 @@ caption {{
                             .format(e(run.measurement)))
                     html_file.write('</tr>\n')
             html_file.write('</tbody>\n</table>\n')
+
+        write_system_information_html(
+            builders={run.builder for run in all_runs},
+            html_file=html_file,
+        )
 
         html_file.write('''</div>
 </body>

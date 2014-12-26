@@ -1,9 +1,16 @@
 import contextlib
+import logging
+import platform
+import re
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
 import timeit
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler(sys.stderr))
 
 get_time = timeit.default_timer
 
@@ -34,3 +41,33 @@ def temporary_directory():
     temp_dir = tempfile.mkdtemp()
     yield temp_dir
     shutil.rmtree(temp_dir)
+
+def processors_info():
+    # Code borrowed from @dbw:
+    # http://stackoverflow.com/a/13078519
+    # Licensed under CC BY-SA 3.0:
+    # http://creativecommons.org/licenses/by-sa/3.0/
+
+    if platform.system() == 'Windows':
+        return [platform.processor()]
+    elif platform.system() == 'Darwin':
+        return filter(None, subprocess.check_output([
+            '/usr/sbin/sysctl',
+            '-n',
+            'machdep.cpu.brand_string',
+        ]).split('\n'))
+    elif platform.system() == 'Linux':
+        processors = []
+        with file('/proc/cpuinfo', 'r') as cpuinfo:
+            model_re = re.compile(r'^.*model name.*:(.*)$')
+            for line in cpuinfo:
+                match = model_re.match(line)
+                if match:
+                    processors.append(line)
+        return processors
+    else:
+        logger.warn(
+            'Could not determine processor information; '
+            'unknown platform',
+        )
+        return []
