@@ -15,27 +15,31 @@ def e(string):
     '''
     return xml.sax.saxutils.escape(str(string))
 
-def title(args, dag_set, setup):
-    return '{}, {}'.format(
-        setup.name(args),
-        dag_set.name,
-    )
 _y_label = 'Time (seconds)'
 
 def make_run_plot_datas(runs):
     '''
     Turns a list of Runs into nested dicts:
 
-    (dag_set, setup) => builder => runs
+    dag_set => setup => builder => runs
     '''
     datas = collections.defaultdict(
-        lambda: collections.defaultdict(list))
+        lambda: collections.defaultdict(
+            lambda: collections.defaultdict(list),
+        ),
+    )
     for run in runs:
-        datas[(run.dag_set, run.setup)][run.builder] \
+        datas[run.dag_set][run.setup][run.builder] \
             .append(run)
     return datas
 
-def multiplot(run_plot_datas, plot_file, args):
+def multiplot(run_plot_datas, dag_set, plot_file, args):
+    '''
+    run_plot_datas is a dict of:
+
+    setup ==> builder => runs
+    '''
+
     # Shift all the plots up to make room for the
     # legend.
     bottom_offset = 0.030
@@ -55,8 +59,7 @@ def multiplot(run_plot_datas, plot_file, args):
     )
 
     first = True
-    for ((dag_set, setup), builder_runs) \
-            in run_plot_datas.iteritems():
+    for (setup, builder_runs) in run_plot_datas.iteritems():
         if first:
             # Show the first plot's legend at the
             # bottom.
@@ -65,15 +68,10 @@ def multiplot(run_plot_datas, plot_file, args):
                 'center bottom maxrows 1\n'
             )
             first = False
-
         plot_file.write_plot(
-            title=title(
-                args=args,
-                dag_set=dag_set,
-                setup=setup,
-            ),
+            title=setup.name(args),
             x_label=dag_set.variable_label,
-            y_label='Time (seconds)',
+            y_label=_y_label,
             series_points={
                 builder.name: [
                     (
@@ -87,6 +85,7 @@ def multiplot(run_plot_datas, plot_file, args):
             },
         )
         plot_file.write_set('key', False)
+
     plot_file.write_unset('multiplot')
 
 @contextlib.contextmanager
@@ -160,6 +159,73 @@ def write_system_information_html(builders, html_file):
 
     html_file.write('</dl>\n')
 
+def write_report_section(
+    args,
+    dag_set,
+    html_file,
+    run_datas,
+):
+    with html_plot_file(html_file, encoding='utf-8') \
+            as plot_file:
+        multiplot(
+            args=args,
+            dag_set=dag_set,
+            plot_file=plot_file,
+            run_plot_datas=run_datas,
+        )
+
+    for (setup, builder_runs) in run_datas.iteritems():
+        # builder => variable => runs
+        builder_variable_runs = collections.defaultdict(
+            lambda: collections.defaultdict(list))
+        for (builder, runs) in builder_runs.iteritems():
+            for run in runs:
+                builder_variable_runs[builder] \
+                    [run.variable].append(run)
+
+        max_measurements = max(
+            len(variable_runs.values())
+            for variable_runs
+            in builder_variable_runs.itervalues()
+        )
+        html_file.write('''<table>
+<caption>{title}</caption>
+<thead>
+<tr>
+    <th>Build System</th>
+    <th>{variable}</th>
+    <th colspan='{time_colspan}'>{y_label}</th>
+</tr>
+</thead>
+<tbody>
+'''.format(
+    time_colspan=e(max_measurements),
+    title=e(setup.name(args)),
+    variable=e(dag_set.variable_label),
+    y_label=_y_label,
+))
+
+        for (builder, variable_runs) \
+                in builder_variable_runs.iteritems():
+            first = True
+            for (variable, runs) in variable_runs.iteritems():
+                html_file.write('<tr>\n')
+                if first:
+                    html_file.write('''\
+    <th rowspan={rowspan}>{builder}</th>
+'''.format(
+    builder=e(builder.name),
+    rowspan=e(len(variable_runs))),
+)
+                    first = False
+                html_file.write('    <td>{}</td>\n'
+                    .format(e(variable)))
+                for run in runs:
+                    html_file.write('    <td>{}</td>\n'
+                        .format(e(run.measurement)))
+                html_file.write('</tr>\n')
+        html_file.write('</tbody>\n</table>\n')
+
 def write_report(runs, args):
     all_runs = list(runs)
     encoding = 'utf-8'
@@ -188,65 +254,17 @@ caption {{
 '''.format(encoding=e(encoding)))
 
         run_plot_datas = make_run_plot_datas(all_runs)
-        with html_plot_file(html_file, encoding='utf-8') \
-                as plot_file:
-            multiplot(
-                args=args,
-                plot_file=plot_file,
-                run_plot_datas=run_plot_datas,
-            )
-
-        for ((dag_set, setup), builder_runs) \
+        for (dag_set, run_datas) \
                 in run_plot_datas.iteritems():
-            # builder => variable => runs
-            builder_variable_runs = collections.defaultdict(
-                lambda: collections.defaultdict(list))
-            for (builder, runs) in builder_runs.iteritems():
-                for run in runs:
-                    builder_variable_runs[builder] \
-                        [run.variable].append(run)
-
-            max_measurements = max(
-                len(variable_runs.values())
-                for variable_runs
-                in builder_variable_runs.itervalues()
+            html_file.write('<h2>{}</h2>\n'.format(
+                dag_set.name,
+            ))
+            write_report_section(
+                args=args,
+                dag_set=dag_set,
+                html_file=html_file,
+                run_datas=run_datas,
             )
-            html_file.write('''<table>
-<caption>{title}</caption>
-<thead>
-<tr>
-    <th>Build System</th>
-    <th>{variable}</th>
-    <th colspan='{time_colspan}'>Time (seconds)</th>
-</tr>
-</thead>
-<tbody>
-'''.format(
-    time_colspan=e(max_measurements),
-    title=title(args=args, dag_set=dag_set, setup=setup),
-    variable=e(dag_set.variable_label),
-))
-            for (builder, variable_runs) \
-                    in builder_variable_runs.iteritems():
-                first = True
-                for (variable, runs) \
-                        in variable_runs.iteritems():
-                    html_file.write('<tr>\n')
-                    if first:
-                        html_file.write('''\
-    <th rowspan={rowspan}>{builder}</th>
-'''.format(
-    builder=e(builder.name),
-    rowspan=e(len(variable_runs))),
-)
-                        first = False
-                    html_file.write('    <td>{}</td>\n'
-                        .format(e(variable)))
-                    for run in runs:
-                        html_file.write('    <td>{}</td>\n'
-                            .format(e(run.measurement)))
-                    html_file.write('</tr>\n')
-            html_file.write('</tbody>\n</table>\n')
 
         write_system_information_html(
             builders={run.builder for run in all_runs},
