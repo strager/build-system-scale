@@ -4,73 +4,10 @@ import argparse
 import bss.builders
 import bss.dagsets
 import bss.gnuplot
+import bss.report
 import bss.run
 import bss.setups
 import bss.util
-import collections
-
-def plot(runs, args):
-    # (dag_set, setup) => builder => runs
-    grouped = collections.defaultdict(
-        lambda: collections.defaultdict(list))
-    for run in runs:
-        grouped[(run.dag_set, run.setup)][run.builder] \
-            .append(run)
-
-    with bss.gnuplot.temp_plot_file() as plot_file:
-        plot_file.write_gif_header('plot.gif')
-
-        # Shift all the plots up to make room for the
-        # legend.
-        bottom_offset = 0.030
-        scale_factor = 1 - bottom_offset / 2
-        plot_file.write_set(
-            'multiplot',
-            kwoptions=[
-                (
-                    'layout',
-                    bss.gnuplot.layout_for_plot_count(
-                        len(grouped),
-                    ),
-                ),
-                ('scale', (scale_factor, scale_factor)),
-                ('offset', (0, bottom_offset)),
-            ]
-        )
-
-        first = True
-        for ((dag_set, setup), config_runs) \
-                in grouped.iteritems():
-            if first:
-                # Show the first plot's legend at the
-                # bottom.
-                plot_file.write_raw(
-                    'set key at screen 0.5, screen 0.0 '
-                    'center bottom maxrows 1\n'
-                )
-                first = False
-
-            plot_file.write_plot(
-                title='{}, {}'.format(
-                    setup.name(args),
-                    dag_set.name,
-                ),
-                x_label=dag_set.variable_label,
-                y_label='Time (seconds)',
-                series_points={
-                    builder.name: [
-                        (
-                            run.variable,
-                            run.measurement,
-                        )
-                        for run in runs
-                    ]
-                    for (builder, runs)
-                    in config_runs.iteritems()
-                },
-            )
-            plot_file.write_set('key', False)
-        plot_file.write_unset('multiplot')
 
 def prepare_parser(parser, builders, dag_sets, setups):
     parser.add_argument(
@@ -88,6 +25,14 @@ def prepare_parser(parser, builders, dag_sets, setups):
         help='Number of runs before measuring',
         metavar='COUNT',
         type=int,
+    )
+    parser.add_argument(
+        '--output-html',
+        default='bss.html',
+        dest='output_html_path',
+        help='Path to the output HTML file',
+        metavar='FILE',
+        type=str,
     )
     for builder in builders:
         builder.prepare_parser(parser)
@@ -205,7 +150,7 @@ def main():
         dag_sets=dag_sets,
         setups=setups,
     ))
-    plot(args=args, runs=runs)
+    bss.report.write_report(args=args, runs=runs)
 
 if __name__ == '__main__':
     main()

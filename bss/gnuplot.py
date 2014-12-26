@@ -56,6 +56,10 @@ class PlotFile(object):
         self.write_set('terminal', 'gif')
         self.write_set('output', output_file_name)
 
+    def write_svg_header(self, output_file_name):
+        self.write_set('terminal', 'svg')
+        self.write_set('output', output_file_name)
+
     def write_plot(
         self,
         series_points,  # {'series', [(x, y), ...]), ...}
