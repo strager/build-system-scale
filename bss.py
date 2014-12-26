@@ -81,6 +81,14 @@ def prepare_parser(parser, builders, dag_sets, setups):
         metavar='COUNT',
         type=int,
     )
+    parser.add_argument(
+        '--warmup-iterations',
+        default=0,
+        dest='warmup_iterations',
+        help='Number of runs before measuring',
+        metavar='COUNT',
+        type=int,
+    )
     for builder in builders:
         builder.prepare_parser(parser)
     for dag_set in dag_sets:

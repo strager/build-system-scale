@@ -73,7 +73,7 @@ class PlotFile(object):
                 self.write_set(name, str(value))
         self.write_raw('plot {}\n'.format(
             ', '.join(
-                '"-" title {} with linespoints'.format(
+                '"-" title {}'.format(
                     PlotFile.sanitize(str(series_name)),
                 )
                 for series_name in series_points.iterkeys()

@@ -10,10 +10,16 @@ Run = collections.namedtuple('Run', [
     'variable',
 ])
 
-def measure_configuration(args, builder, dag, setup):
+def measure_configuration(
+    args,
+    builder,
+    dag,
+    setup,
+    iterations=1,
+):
     measurements = []
     build_nodes = dag.root_nodes()
-    for _ in xrange(args.iterations):
+    for _ in xrange(iterations):
         with bss.util.temporary_directory() as temp_dir:
             builder.set_up(
                 args=args,
@@ -35,7 +41,7 @@ def measure_configuration(args, builder, dag, setup):
             )
             end = bss.util.get_time()
             measurements.append(end - start)
-    return min(measurements)
+    return measurements
 
 def run_configurations(
     args,
@@ -43,22 +49,34 @@ def run_configurations(
     dag_sets,
     setups,
 ):
+    if args.iterations < 0:
+        raise Exception('--iterations must be non-negative')
+    if args.warmup_iterations < 0:
+        raise Exception(
+            '--warmup-iterations must be non-native',
+        )
     for builder in builders:
         for dag_set in dag_sets:
             for setup in setups:
                 dags = dag_set.dags(args)
                 for (variable, dag) in dags:
-                    measurement = measure_configuration(
+                    measurements = measure_configuration(
                         args=args,
                         builder=builder,
                         dag=dag,
                         setup=setup,
+                        iterations=args.iterations
+                            + args.warmup_iterations,
                     )
-                    yield Run(
-                        builder=builder,
-                        dag=dag,
-                        dag_set=dag_set,
-                        measurement=measurement,
-                        setup=setup,
-                        variable=variable,
-                    )
+                    good_measurements = measurements[
+                        args.warmup_iterations:
+                    ]
+                    for measurement in good_measurements:
+                        yield Run(
+                            builder=builder,
+                            dag=dag,
+                            dag_set=dag_set,
+                            measurement=measurement,
+                            setup=setup,
+                            variable=variable,
+                        )
