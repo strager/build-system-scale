@@ -26,13 +26,14 @@ class GNUMakeBuilder(Builder):
         with open(makefile_path, 'w') as makefile:
             for from_node in dag.all_nodes():
                 to_nodes = list(dag.nodes_from(from_node))
-                if to_nodes:
-                    makefile.write(
-                       '{}: {}\n\t@cat $^ >$@\n'.format(
-                            from_node,
-                            ' '.join(map(str, to_nodes)),
-                        ),
-                    )
+                if not to_nodes:
+                    continue
+                makefile.write(
+                   '{}: {}\n\t@head -n1 $^ >$@\n'.format(
+                        from_node,
+                        ' '.join(map(str, to_nodes)),
+                    ),
+                )
 
     @staticmethod
     def build(temp_dir, nodes, args):
@@ -62,7 +63,7 @@ class NinjaBuilder(Builder):
         with open(build_ninja_path, 'w') as ninja:
             ninja.write('ninja_required_version = 1.0\n')
             ninja.write(
-                'rule cp\n command = cat $in >$out\n',
+                'rule cp\n command = head -n1 $in >$out\n',
             )
             for from_node in dag.all_nodes():
                 to_nodes = list(dag.nodes_from(from_node))
@@ -104,13 +105,18 @@ class TupBuilder(Builder):
             # depending upon the node.
             for (from_node, to_nodes) \
                     in reversed(list(dag.flatten())):
-                if to_nodes:
-                    tupfile.write(
-                        ': {} |> cat %f >%o |> {}\n'.format(
-                            ' '.join(map(str, to_nodes)),
+                to_nodes = dag.nodes_from(from_node)
+                if not to_nodes:
+                    continue
+                to_nodes_string \
+                    = ' '.join(map(str, to_nodes))
+                tupfile.write(
+                    ': {} |> head -n1 %f >%o |> {}\n'
+                        .format(
+                            to_nodes_string,
                             from_node,
                         ),
-                    )
+                )
 
     @staticmethod
     def build(temp_dir, nodes, args):
