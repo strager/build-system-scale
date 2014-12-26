@@ -240,7 +240,7 @@ caption {{
     rowspan=e(len(variable_runs))),
 )
                         first = False
-                    html_file.write('    <td>{}</td>'
+                    html_file.write('    <td>{}</td>\n'
                         .format(e(variable)))
                     for run in runs:
                         html_file.write('    <td>{}</td>\n'
