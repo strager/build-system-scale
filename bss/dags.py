@@ -106,19 +106,37 @@ class DAG(object):
         levels_by_name = {}
         names_by_level = collections.defaultdict(set)
 
-        def walk_depth_first(name):
-            if name in levels_by_name:
-                return levels_by_name[name]
-            children = self.nodes_from(name)
-            level = 0
-            if children:
-                level = 1 + max(
-                    walk_depth_first(lname)
-                    for lname in children
-                )
+        def add_level_to_name(name, level):
             levels_by_name[name] = level
             names_by_level[level].add(name)
-            return level
+
+        def walk_depth_first(name):
+            stack = [name]
+            while stack:
+                name = stack.pop()
+                if name in levels_by_name:
+                    continue
+
+                children = frozenset(self.nodes_from(name))
+                if not children:
+                    level = 0
+                    add_level_to_name(name, level)
+                    continue
+
+                children_not_calculated = [
+                    child for child in children
+                    if child not in levels_by_name
+                ]
+                if children_not_calculated:
+                    stack.append(name)
+                    stack.extend(children_not_calculated)
+                    continue
+
+                level = 1 + max(
+                    levels_by_name[lname]
+                    for lname in children
+                )
+                add_level_to_name(name, level)
 
         for name in self.all_nodes():
             walk_depth_first(name)
@@ -128,7 +146,7 @@ class DAG(object):
             (
                 names_by_level.get(i, None)
                 for i in itertools.count()
-            ),
+            )
         ))
 
 class DotDAG(DAG):
@@ -410,6 +428,21 @@ class TestUniformFanOutDAG(unittest.TestCase):
         self.assertItemsEqual(dag.nodes_from(12), [])
         self.assertItemsEqual(dag.nodes_from(13), [])
         validate_dag(dag)
+
+class TestLinearDAG(unittest.TestCase):
+    def test_topological_sort_10(self):
+        dag = LinearDAG(10)
+        self.assertEqual(
+            dag.all_nodes_sorted_topologically(),
+            [{i} for i in xrange(10, 0, -1)],
+        )
+
+    def test_topological_sort_10000(self):
+        dag = LinearDAG(10000)
+        self.assertEqual(
+            dag.all_nodes_sorted_topologically(),
+            [{i} for i in xrange(10000, 0, -1)],
+        )
 
 if __name__ == '__main__':
     unittest.main()
